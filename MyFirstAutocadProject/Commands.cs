@@ -15,7 +15,7 @@ namespace MyFirstAutocadProject {
         public static DocumentCollection dc = AcAp.DocumentManager;
         public static Database db = AcAp.DocumentManager.MdiActiveDocument.Database;
         public static Editor ed = AcAp.DocumentManager.MdiActiveDocument.Editor;
-        
+
         private SupportFunction func = new SupportFunction();
         public static string logPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "log.txt");
 
@@ -47,7 +47,7 @@ namespace MyFirstAutocadProject {
             Transaction trans = db.TransactionManager.StartTransaction();
 
             ObjectId blockID = db.CurrentSpaceId;
-            BlockTableRecord currentSpace = trans.GetObject(blockID,OpenMode.ForWrite) as BlockTableRecord;
+            BlockTableRecord currentSpace = trans.GetObject(blockID, OpenMode.ForWrite) as BlockTableRecord;
 
             PromptPointOptions promptPointOptions = new PromptPointOptions("\nSelect a point") {
                 AllowArbitraryInput = false,
@@ -56,14 +56,14 @@ namespace MyFirstAutocadProject {
 
             PromptPointResult inputPoint = ed.GetPoint(promptPointOptions);
             if (inputPoint.Status != PromptStatus.OK) return;
-            
+
             int lengthX = 100, lengthY = 200;
 
-            Point3d horizontalEndPoint = new Point3d(inputPoint.Value.X, inputPoint.Value.Y + lengthY,0);
+            Point3d horizontalEndPoint = new Point3d(inputPoint.Value.X, inputPoint.Value.Y + lengthY, 0);
             Point3d verticalEndPoint = new Point3d(inputPoint.Value.X + lengthX, inputPoint.Value.Y, 0);
 
-            Line verticalLine = new Line(inputPoint.Value,verticalEndPoint);
-            Line horizontalLine = new Line(inputPoint.Value,horizontalEndPoint);
+            Line verticalLine = new Line(inputPoint.Value, verticalEndPoint);
+            Line horizontalLine = new Line(inputPoint.Value, horizontalEndPoint);
 
             currentSpace.AppendEntity(verticalLine);
             trans.AddNewlyCreatedDBObject(verticalLine, true);
@@ -89,9 +89,9 @@ namespace MyFirstAutocadProject {
                     Height = 10,
                     TextString = "Hello World"
                 };
-                
+
                 currentSpace.AppendEntity(newText);
-                trans.AddNewlyCreatedDBObject(newText,true);
+                trans.AddNewlyCreatedDBObject(newText, true);
             }
             catch {
                 ed.WriteMessage("\nFail to create text");
@@ -113,8 +113,8 @@ namespace MyFirstAutocadProject {
 
             Transaction trans = db.TransactionManager.StartTransaction();
             Polyline polylineObj = trans.GetObject(prtResult.ObjectId, OpenMode.ForRead) as Polyline;
-            
-            ed.WriteMessage("Polyline have " +  polylineObj.NumberOfVertices + " vertices");
+
+            ed.WriteMessage("Polyline have " + polylineObj.NumberOfVertices + " vertices");
 
             trans.Commit();
         }
@@ -174,8 +174,8 @@ namespace MyFirstAutocadProject {
             trans.Commit();
 
             Polyline[] polylines = func.GetAllPolylineInLayer();
-            
-            for (int i = 0; i<inputPolyLine.NumberOfVertices-1; i++) {
+
+            for (int i = 0; i < inputPolyLine.NumberOfVertices - 1; i++) {
                 double length = inputPolyLine.GetPoint3dAt(i).DistanceTo(inputPolyLine.GetPoint3dAt(i + 1));
                 //double kLength = length / 100;
                 double ratio = length / 100;
@@ -243,13 +243,13 @@ namespace MyFirstAutocadProject {
                 Vector3d nextPointVector;
 
                 double stackRealDistance = 0, stackFlatDistance = 0;
-                
+
                 using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
                     wr.WriteLine(currentPointVector.X + "@" + currentPointVector.Y + "@" + func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(currentPointVector.X, currentPointVector.Y, 0), polylines)) + "@0@0@0@0");
                     wr.Close();
                 }
 
-                while (direction.DotProduct(endPointVector-currentPointVector) > 0) {
+                while (direction.DotProduct(endPointVector - currentPointVector) > 0) {
                     double realDistance, flatDistance;
                     double lambda = 4; // determine the start value of distance to move 
 
@@ -260,18 +260,18 @@ namespace MyFirstAutocadProject {
 
                     Vector3d auxPointVector = currentPointVector;
 
-                    int flipper = 0;
+                    int flipper;
                     int count = 0;
                     while (true) {
                         count++;
-                        
+
                         double nextElevation = func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(nextPointVector.X, nextPointVector.Y, 0), polylines));
                         Point3d nextPoint = new Point3d(nextPointVector.X, nextPointVector.Y, nextElevation);
 
                         realDistance = currentPoint.DistanceTo(nextPoint);
                         flatDistance = func.DistanceBetween(currentPointVector, nextPointVector);
 
-                        
+
                         if (count > 100) {
                             stackFlatDistance += flatDistance;
                             stackRealDistance += realDistance;
@@ -284,22 +284,24 @@ namespace MyFirstAutocadProject {
                         }
 
                         if (realDistance < 6.9) {
-                            lambda = func.DistanceBetween(auxPointVector,nextPointVector);
+                            lambda = func.DistanceBetween(auxPointVector, nextPointVector);
                             auxPointVector = nextPointVector;
 
                             //if (flipper != 1 || count >= 10) {  }
                             flipper = 1;
 
-                            nextPointVector += direction.MultiplyBy(flipper * lambda/2);
-                        } else if (realDistance > 7.1) {
+                            nextPointVector += direction.MultiplyBy(flipper * lambda / 2);
+                        }
+                        else if (realDistance > 7.1) {
                             lambda = func.DistanceBetween(auxPointVector, nextPointVector);
                             auxPointVector = nextPointVector;
 
                             //if (flipper != -1 || count >= 10) {  }
                             flipper = -1;
 
-                            nextPointVector += direction.MultiplyBy(flipper * lambda/2);
-                        } else {
+                            nextPointVector += direction.MultiplyBy(flipper * lambda / 2);
+                        }
+                        else {
                             stackFlatDistance += flatDistance;
                             stackRealDistance += realDistance;
 
@@ -313,12 +315,122 @@ namespace MyFirstAutocadProject {
                         }
 
                     }
-                    
+
                     currentPointVector = nextPointVector;
                 }
 
 
             }
+            AcAp.ShowAlertDialog("Done!");
+        }
+
+        [CommandMethod("NTMGetElevationOfLineBinary")]
+        public void cmdFindNearestLineBinary() {
+            #region get user input
+            PromptEntityOptions prptOpts = new PromptEntityOptions("\nSelect a Line:") {
+                AllowNone = true,
+                AllowObjectOnLockedLayer = true
+            };
+            prptOpts.SetRejectMessage("\nNot a line!");
+            prptOpts.AddAllowedClass(typeof(Line), true);
+
+            PromptEntityResult prptResult = ed.GetEntity(prptOpts);
+            if (prptResult.Status != PromptStatus.OK) { return; }
+
+            Transaction trans = db.TransactionManager.StartTransaction();
+            Line inputPolyLine = trans.GetObject(prptResult.ObjectId, OpenMode.ForRead) as Line;
+            trans.Commit();
+
+            Polyline[] polylines = func.GetAllPolylineInLayer();
+            #endregion
+
+            Vector3d startPointVector = inputPolyLine.StartPoint.GetAsVector();
+            Vector3d endPointVector = inputPolyLine.EndPoint.GetAsVector();
+
+            Vector3d direction = (endPointVector - startPointVector).GetNormal();
+
+            Vector3d currentPointVector = startPointVector;
+            Vector3d nextPointVector;
+
+            double stackRealDistance = 0, stackFlatDistance = 0;
+
+            using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
+                wr.WriteLine(currentPointVector.X + "@" + currentPointVector.Y + "@" + func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(currentPointVector.X, currentPointVector.Y, 0), polylines)) + "@0@0@0@0");
+                wr.Close();
+            }
+            double lambda;
+            while (direction.DotProduct(endPointVector - currentPointVector) > 0) {
+                double realDistance, flatDistance;
+                lambda = 4;// determine the start value of distance to move 
+
+                double currentElevation = func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(currentPointVector.X, currentPointVector.Y, 0), polylines));
+                Point3d currentPoint = new Point3d(currentPointVector.X, currentPointVector.Y, currentElevation);
+
+                nextPointVector = currentPointVector + direction.MultiplyBy(lambda);
+
+                Vector3d auxPointVector = currentPointVector;
+
+                int flipper;
+                int count = 0;
+                while (true) { //start binary search
+                    count++;
+
+                    double nextElevation = func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(nextPointVector.X, nextPointVector.Y, 0), polylines));
+                    Point3d nextPoint = new Point3d(nextPointVector.X, nextPointVector.Y, nextElevation);
+
+                    realDistance = currentPoint.DistanceTo(nextPoint);
+                    flatDistance = func.DistanceBetween(currentPointVector, nextPointVector);
+
+
+                    if (count > 100) {
+                        stackFlatDistance += flatDistance;
+                        stackRealDistance += realDistance;
+                        String info = nextPoint.X + "@" + nextPoint.Y + "@" + nextElevation + "@" + flatDistance + "@" + stackFlatDistance + "@" + realDistance + "@" + stackRealDistance;
+                        using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
+                            wr.WriteLine(info + "@Overloaded");
+                            wr.Close();
+                        }
+                        break;
+                    }
+
+                    if (realDistance < 6.9) {
+                        lambda = func.DistanceBetween(auxPointVector, nextPointVector);
+                        auxPointVector = nextPointVector;
+
+                        //if (flipper != 1 || count >= 10) {  }
+                        flipper = 1;
+
+                        nextPointVector += direction.MultiplyBy(flipper * lambda / 2);
+                    }
+                    else if (realDistance > 7.1) {
+                        lambda = func.DistanceBetween(auxPointVector, nextPointVector);
+                        auxPointVector = nextPointVector;
+
+                        //if (flipper != -1 || count >= 10) {  }
+                        flipper = -1;
+
+                        nextPointVector += direction.MultiplyBy(flipper * lambda / 2);
+                    }
+                    else {
+                        stackFlatDistance += flatDistance;
+                        stackRealDistance += realDistance;
+
+                        String info = nextPoint.X + "@" + nextPoint.Y + "@" + nextElevation + "@" + flatDistance + "@" + stackFlatDistance + "@" + realDistance + "@" + stackRealDistance;
+
+                        using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
+                            wr.WriteLine(info);
+                            wr.Close();
+                        }
+                        break;
+                    }
+
+                }
+
+                currentPointVector = nextPointVector;
+            }
+
+
+
             AcAp.ShowAlertDialog("Done!");
         }
 
@@ -331,7 +443,7 @@ namespace MyFirstAutocadProject {
             prptOpts.SetRejectMessage("\nNot a line!");
             prptOpts.AddAllowedClass(typeof(Polyline), true);
 
-            ed.WriteMessage("Ark for input PolyLine"); 
+            ed.WriteMessage("Ark for input PolyLine");
 
             PromptEntityResult prptResult = ed.GetEntity(prptOpts);
             if (prptResult.Status != PromptStatus.OK) { return; }
@@ -375,14 +487,14 @@ namespace MyFirstAutocadProject {
             }
             ed.WriteMessage("Complete calculate!");
         }
-        
+
         [CommandMethod("NTMWriteCoordinate")]
         public void cmdWriteCoordinate() {
             // read file:
             StreamReader reader = new StreamReader(@"G:\Code\Python\autoCAD\text-file\TEST-2.txt");
             String line;
             int count = 1;
-            
+
             int TSIZE = 3;
 
 
@@ -434,14 +546,14 @@ namespace MyFirstAutocadProject {
                 }
                 // phan chia kcl
                 using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
-                        Line verticalLine = new Line(new Point3d(kccdX, kccdY + 7.5, 0), new Point3d(kccdX, kccdY + 17.5, 0));
-                        modelSpace.AppendEntity(verticalLine);
-                        tr.AddNewlyCreatedDBObject(verticalLine, true);
-                        tr.Commit();
-                    }
+                    Line verticalLine = new Line(new Point3d(kccdX, kccdY + 7.5, 0), new Point3d(kccdX, kccdY + 17.5, 0));
+                    modelSpace.AppendEntity(verticalLine);
+                    tr.AddNewlyCreatedDBObject(verticalLine, true);
+                    tr.Commit();
+                }
                 // stt line
                 using (Transaction tr = db.TransactionManager.StartTransaction()) {
                     BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -450,7 +562,8 @@ namespace MyFirstAutocadProject {
                     double sttY;
                     if (count % 2 == 0) {
                         sttY = kccdY - 27;
-                    }else {
+                    }
+                    else {
                         sttY = kccdY - 17;
                     }
                     Line markerLine = new Line(new Point3d(kccdX, sttY, 0), new Point3d(kccdX, sttY + 5, 0));
@@ -458,18 +571,18 @@ namespace MyFirstAutocadProject {
                     tr.AddNewlyCreatedDBObject(markerLine, true);
 
                     tr.Commit();
-                    }
+                }
                 //cao do line
                 using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
-                        Line cdLine = new Line(new Point3d(kccdX, kccdY + 40, 0), new Point3d(kccdX, kccdY + double.Parse(linesList[2]) + 40, 0));
-                        modelSpace.AppendEntity(cdLine);
-                        tr.AddNewlyCreatedDBObject(cdLine, true);
+                    Line cdLine = new Line(new Point3d(kccdX, kccdY + 40, 0), new Point3d(kccdX, kccdY + double.Parse(linesList[2]) + 40, 0));
+                    modelSpace.AppendEntity(cdLine);
+                    tr.AddNewlyCreatedDBObject(cdLine, true);
 
-                        tr.Commit();
-                    }
+                    tr.Commit();
+                }
                 // stt text
                 using (Transaction tr = db.TransactionManager.StartTransaction()) {
                     BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -482,7 +595,8 @@ namespace MyFirstAutocadProject {
                     stt.WidthFactor = 1;
                     if (count % 2 == 0) {
                         stt.Position = new Point3d(kccdX - 3.5, kccdY - 30, 0);
-                    } else {
+                    }
+                    else {
                         stt.Position = new Point3d(kccdX - 3.5, kccdY - 20, 0);
                     }
                     modelSpace.AppendEntity(stt);
@@ -513,7 +627,7 @@ namespace MyFirstAutocadProject {
                     tr.Commit();
                 }
 
-                    count++;
+                count++;
             }
 
             using (Transaction tr = db.TransactionManager.StartTransaction()) {
@@ -525,7 +639,7 @@ namespace MyFirstAutocadProject {
                 tr.AddNewlyCreatedDBObject(upperLine, true);
                 tr.Commit();
             }
-            
+
             using (Transaction tr = db.TransactionManager.StartTransaction()) {
                 BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                 BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
@@ -539,7 +653,7 @@ namespace MyFirstAutocadProject {
         }
 
         [CommandMethod("NTMWritePolyline")]
-        public void cmdWritePolyline() { 
+        public void cmdWritePolyline() {
 
 
 
