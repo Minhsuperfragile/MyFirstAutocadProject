@@ -159,6 +159,8 @@ namespace MyFirstAutocadProject {
 
         [CommandMethod("NTMGetElevationOfPolyLineLinear")]
         public void cmdFindNearestPolyLineLinear() {
+            string saveFilePath = func.OpenFile();
+
             PromptEntityOptions prptOpts = new PromptEntityOptions("\nSelect a PolyLine:") {
                 AllowNone = true,
                 AllowObjectOnLockedLayer = true,
@@ -189,7 +191,7 @@ namespace MyFirstAutocadProject {
 
                 for (int j = 0; j <= 100; j++) {
 
-                    String pointInfo = currentPoint.X.ToString() + "@" + currentPoint.Y.ToString() + "@" +
+                    String pointInfo = currentPoint.X.ToString() + "," + currentPoint.Y.ToString() + "," +
                     func.GetEnhancedPrecisionElevation(
                         func.TwoClosestPolyLineToPoint(
                         new Point3d(
@@ -200,10 +202,15 @@ namespace MyFirstAutocadProject {
                         ));
 
                     currentPoint += direction.MultiplyBy(ratio);
-
-                    using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
-                        wr.WriteLine(pointInfo);
-                        wr.Close();
+                    try {
+                        using (StreamWriter wr = File.AppendText(saveFilePath)) {
+                            wr.WriteLine(pointInfo);
+                            wr.Close();
+                        }
+                    }
+                    catch {
+                        ed.WriteMessage("\nFailed to open file");
+                        return;
                     }
                     ed.WriteMessage("\n" + pointInfo);
                 }
@@ -216,6 +223,8 @@ namespace MyFirstAutocadProject {
         [CommandMethod("NTMGetElevationOfPolylineBinary")]
         public void cmdFindNearestPolylineBinary() {
             #region get user input
+            string saveFilePath = func.OpenFile();
+
             PromptEntityOptions prptOpts = new PromptEntityOptions("\nSelect a PolyLine:") {
                 AllowNone = true,
                 AllowObjectOnLockedLayer = true
@@ -243,10 +252,15 @@ namespace MyFirstAutocadProject {
                 Vector3d nextPointVector;
 
                 double stackRealDistance = 0, stackFlatDistance = 0;
-
-                using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
-                    wr.WriteLine(currentPointVector.X + "@" + currentPointVector.Y + "@" + func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(currentPointVector.X, currentPointVector.Y, 0), polylines)) + "@0@0@0@0");
-                    wr.Close();
+                try {
+                    using (StreamWriter wr = File.AppendText(saveFilePath)) {
+                        wr.WriteLine(currentPointVector.X + "," + currentPointVector.Y + "," + func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(currentPointVector.X, currentPointVector.Y, 0), polylines)) + ",0,0,0,0");
+                        wr.Close();
+                    }
+                }
+                catch {
+                    ed.WriteMessage("\nFailed to open file");
+                    return;
                 }
 
                 while (direction.DotProduct(endPointVector - currentPointVector) > 0) {
@@ -271,13 +285,12 @@ namespace MyFirstAutocadProject {
                         realDistance = currentPoint.DistanceTo(nextPoint);
                         flatDistance = func.DistanceBetween(currentPointVector, nextPointVector);
 
-
                         if (count > 100) {
                             stackFlatDistance += flatDistance;
                             stackRealDistance += realDistance;
-                            String info = nextPoint.X + "@" + nextPoint.Y + "@" + nextElevation + "@" + flatDistance + "@" + stackFlatDistance + "@" + realDistance + "@" + stackRealDistance;
-                            using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
-                                wr.WriteLine(info + "@Overloaded");
+                            String info = nextPoint.X + "," + nextPoint.Y + "," + nextElevation + "," + flatDistance + "," + stackFlatDistance + "," + realDistance + "," + stackRealDistance;
+                            using (StreamWriter wr = File.AppendText(saveFilePath)) {
+                                wr.WriteLine(info + ",Overloaded");
                                 wr.Close();
                             }
                             break;
@@ -289,8 +302,8 @@ namespace MyFirstAutocadProject {
 
                             //if (flipper != 1 || count >= 10) {  }
                             flipper = 1;
-
                             nextPointVector += direction.MultiplyBy(flipper * lambda / 2);
+
                         }
                         else if (realDistance > 7.1) {
                             lambda = func.DistanceBetween(auxPointVector, nextPointVector);
@@ -305,9 +318,9 @@ namespace MyFirstAutocadProject {
                             stackFlatDistance += flatDistance;
                             stackRealDistance += realDistance;
 
-                            String info = nextPoint.X + "@" + nextPoint.Y + "@" + nextElevation + "@" + flatDistance + "@" + stackFlatDistance + "@" + realDistance + "@" + stackRealDistance;
+                            String info = nextPoint.X + "," + nextPoint.Y + "," + nextElevation + "," + flatDistance + "," + stackFlatDistance + "," + realDistance + "," + stackRealDistance;
 
-                            using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
+                            using (StreamWriter wr = File.AppendText(saveFilePath)) {
                                 wr.WriteLine(info);
                                 wr.Close();
                             }
@@ -315,11 +328,8 @@ namespace MyFirstAutocadProject {
                         }
 
                     }
-
                     currentPointVector = nextPointVector;
                 }
-
-
             }
             AcAp.ShowAlertDialog("Done!");
         }
@@ -327,6 +337,8 @@ namespace MyFirstAutocadProject {
         [CommandMethod("NTMGetElevationOfLineBinary")]
         public void cmdFindNearestLineBinary() {
             #region get user input
+            string saveFilePath = func.OpenFile();
+
             PromptEntityOptions prptOpts = new PromptEntityOptions("\nSelect a Line:") {
                 AllowNone = true,
                 AllowObjectOnLockedLayer = true
@@ -353,10 +365,15 @@ namespace MyFirstAutocadProject {
             Vector3d nextPointVector;
 
             double stackRealDistance = 0, stackFlatDistance = 0;
-
-            using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
-                wr.WriteLine(currentPointVector.X + "@" + currentPointVector.Y + "@" + func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(currentPointVector.X, currentPointVector.Y, 0), polylines)) + "@0@0@0@0");
-                wr.Close();
+            try {
+                using (StreamWriter wr = File.AppendText(saveFilePath)) {
+                    wr.WriteLine(currentPointVector.X + "," + currentPointVector.Y + "," + func.GetEnhancedPrecisionElevation(func.TwoClosestPolyLineToPoint(new Point3d(currentPointVector.X, currentPointVector.Y, 0), polylines)) + ",0,0,0,0");
+                    wr.Close();
+                }
+            }
+            catch {
+                ed.WriteMessage("\nFailed to open file");
+                return;
             }
             double lambda;
             while (direction.DotProduct(endPointVector - currentPointVector) > 0) {
@@ -385,9 +402,9 @@ namespace MyFirstAutocadProject {
                     if (count > 100) {
                         stackFlatDistance += flatDistance;
                         stackRealDistance += realDistance;
-                        String info = nextPoint.X + "@" + nextPoint.Y + "@" + nextElevation + "@" + flatDistance + "@" + stackFlatDistance + "@" + realDistance + "@" + stackRealDistance;
-                        using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
-                            wr.WriteLine(info + "@Overloaded");
+                        String info = nextPoint.X + "," + nextPoint.Y + "," + nextElevation + "," + flatDistance + "," + stackFlatDistance + "," + realDistance + "," + stackRealDistance;
+                        using (StreamWriter wr = File.AppendText(saveFilePath)) {
+                            wr.WriteLine(info + ",Overloaded");
                             wr.Close();
                         }
                         break;
@@ -415,9 +432,9 @@ namespace MyFirstAutocadProject {
                         stackFlatDistance += flatDistance;
                         stackRealDistance += realDistance;
 
-                        String info = nextPoint.X + "@" + nextPoint.Y + "@" + nextElevation + "@" + flatDistance + "@" + stackFlatDistance + "@" + realDistance + "@" + stackRealDistance;
+                        String info = nextPoint.X + "," + nextPoint.Y + "," + nextElevation + "," + flatDistance + "," + stackFlatDistance + "," + realDistance + "," + stackRealDistance;
 
-                        using (StreamWriter wr = File.AppendText(@"G:\Code\Python\autoCAD\text-file\TEST.txt")) {
+                        using (StreamWriter wr = File.AppendText(saveFilePath)) {
                             wr.WriteLine(info);
                             wr.Close();
                         }
@@ -490,180 +507,207 @@ namespace MyFirstAutocadProject {
 
         [CommandMethod("NTMWriteCoordinate")]
         public void cmdWriteCoordinate() {
+            string saveFilePath = func.OpenFile();
+
             // read file:
-            StreamReader reader = new StreamReader(@"G:\Code\Python\autoCAD\text-file\TEST-2.txt");
-            String line;
-            int count = 1;
+            try {
+                StreamReader reader = new StreamReader(saveFilePath);
 
-            int TSIZE = 3;
+                String line;
+                int count = 1;
+
+                int TSIZE = 3;
 
 
-            double kccdX = 100;
-            double kccdY = 100;
-            double kclX;
-            double kclY = 112.5;
+                double kccdX = 100;
+                double kccdY = 100;
+                double kclX;
+                double kclY = 112.5;
 
-            for (line = reader.ReadLine(); line != null; line = reader.ReadLine()) {
-                String[] linesList = line.Split('@');
-                if (count != 1) {
-                    kccdX += float.Parse(linesList[1]);
-                }
-
-                // kccd text
-                using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    DBText kccd = new DBText();
-                    kccd.TextString = linesList[0];
-                    kccd.Height = TSIZE;
-                    kccd.Rotation = 1.571;
-                    kccd.WidthFactor = 1;
-                    kccd.Position = new Point3d(kccdX + 1.5, kccdY - 9, 0);
-                    modelSpace.AppendEntity(kccd);
-                    tr.AddNewlyCreatedDBObject(kccd, true);
-
-                    ed.WriteMessage("created kccd \n");
-                    tr.Commit();
-                }
-                // cao do text
-                using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    DBText cd = new DBText();
-
-                    cd.TextString = linesList[2];
-                    cd.Height = TSIZE;
-                    cd.Rotation = 1.571;
-                    cd.WidthFactor = 1;
-                    cd.Position = new Point3d(kccdX + 1.5, kccdY + 23, 0);
-                    modelSpace.AppendEntity(cd);
-                    tr.AddNewlyCreatedDBObject(cd, true);
-
-                    tr.Commit();
-                    ed.WriteMessage("created cd = " + cd.TextString + " \n");
-                }
-                // phan chia kcl
-                using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    Line verticalLine = new Line(new Point3d(kccdX, kccdY + 7.5, 0), new Point3d(kccdX, kccdY + 17.5, 0));
-                    modelSpace.AppendEntity(verticalLine);
-                    tr.AddNewlyCreatedDBObject(verticalLine, true);
-                    tr.Commit();
-                }
-                // stt line
-                using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    double sttY;
-                    if (count % 2 == 0) {
-                        sttY = kccdY - 27;
+                for (line = reader.ReadLine(); line != null; line = reader.ReadLine()) {
+                    String[] linesList = line.Split(',');
+                    if (count != 1) {
+                        kccdX += float.Parse(linesList[1]);
                     }
-                    else {
-                        sttY = kccdY - 17;
+
+                    // kccd text
+                    using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                        DBText kccd = new DBText();
+                        kccd.TextString = linesList[0];
+                        kccd.Height = TSIZE;
+                        kccd.Rotation = 1.571;
+                        kccd.WidthFactor = 1;
+                        kccd.Position = new Point3d(kccdX + 1.5, kccdY - 9, 0);
+                        modelSpace.AppendEntity(kccd);
+                        tr.AddNewlyCreatedDBObject(kccd, true);
+
+                        ed.WriteMessage("created kccd \n");
+                        tr.Commit();
                     }
-                    Line markerLine = new Line(new Point3d(kccdX, sttY, 0), new Point3d(kccdX, sttY + 5, 0));
-                    modelSpace.AppendEntity(markerLine);
-                    tr.AddNewlyCreatedDBObject(markerLine, true);
+                    // cao do text
+                    using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
-                    tr.Commit();
-                }
-                //cao do line
-                using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        DBText cd = new DBText();
 
-                    Line cdLine = new Line(new Point3d(kccdX, kccdY + 40, 0), new Point3d(kccdX, kccdY + double.Parse(linesList[2]) + 40, 0));
-                    modelSpace.AppendEntity(cdLine);
-                    tr.AddNewlyCreatedDBObject(cdLine, true);
+                        cd.TextString = linesList[2];
+                        cd.Height = TSIZE;
+                        cd.Rotation = 1.571;
+                        cd.WidthFactor = 1;
+                        cd.Position = new Point3d(kccdX + 1.5, kccdY + 23, 0);
+                        modelSpace.AppendEntity(cd);
+                        tr.AddNewlyCreatedDBObject(cd, true);
 
-                    tr.Commit();
-                }
-                // stt text
-                using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                    DBText stt = new DBText();
-                    stt.TextString = "G" + count.ToString();
-                    stt.Height = TSIZE;
-                    stt.Rotation = 0;
-                    stt.WidthFactor = 1;
-                    if (count % 2 == 0) {
-                        stt.Position = new Point3d(kccdX - 3.5, kccdY - 30, 0);
+                        tr.Commit();
+                        ed.WriteMessage("created cd = " + cd.TextString + " \n");
                     }
-                    else {
-                        stt.Position = new Point3d(kccdX - 3.5, kccdY - 20, 0);
-                    }
-                    modelSpace.AppendEntity(stt);
-                    tr.AddNewlyCreatedDBObject(stt, true);
+                    // phan chia kcl
+                    using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
-                    ed.WriteMessage("created stt \n");
-                    tr.Commit();
-                }
-                if (count == 1) {
+                        Line verticalLine = new Line(new Point3d(kccdX, kccdY + 7.5, 0), new Point3d(kccdX, kccdY + 17.5, 0));
+                        modelSpace.AppendEntity(verticalLine);
+                        tr.AddNewlyCreatedDBObject(verticalLine, true);
+                        tr.Commit();
+                    }
+                    // stt line
+                    using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                        double sttY;
+                        if (count % 2 == 0) {
+                            sttY = kccdY - 27;
+                        }
+                        else {
+                            sttY = kccdY - 17;
+                        }
+                        Line markerLine = new Line(new Point3d(kccdX, sttY, 0), new Point3d(kccdX, sttY + 5, 0));
+                        modelSpace.AppendEntity(markerLine);
+                        tr.AddNewlyCreatedDBObject(markerLine, true);
+
+                        tr.Commit();
+                    }
+                    //cao do line
+                    using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                        Line cdLine = new Line(new Point3d(kccdX, kccdY + 40, 0), new Point3d(kccdX, kccdY + double.Parse(linesList[2]) + 40, 0));
+                        modelSpace.AppendEntity(cdLine);
+                        tr.AddNewlyCreatedDBObject(cdLine, true);
+
+                        tr.Commit();
+                    }
+                    // stt text
+                    using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                        DBText stt = new DBText();
+                        stt.TextString = "G" + count.ToString();
+                        stt.Height = TSIZE;
+                        stt.Rotation = 0;
+                        stt.WidthFactor = 1;
+                        if (count % 2 == 0) {
+                            stt.Position = new Point3d(kccdX - 3.5, kccdY - 30, 0);
+                        }
+                        else {
+                            stt.Position = new Point3d(kccdX - 3.5, kccdY - 20, 0);
+                        }
+                        modelSpace.AppendEntity(stt);
+                        tr.AddNewlyCreatedDBObject(stt, true);
+
+                        ed.WriteMessage("created stt \n");
+                        tr.Commit();
+                    }
+                    if (count == 1) {
+                        count++;
+                        continue;
+                    }
+                    // kcl text
+                    using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                        BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                        BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        DBText kcl = new DBText();
+                        kclX = kccdX - float.Parse(linesList[1]) / 2;
+
+                        kcl.TextString = linesList[1];
+                        kcl.Height = TSIZE;
+                        kcl.Rotation = 1.571;
+                        kcl.WidthFactor = 1;
+                        kcl.Position = new Point3d(kclX + 2, kclY - 4, 0);
+                        modelSpace.AppendEntity(kcl);
+                        tr.AddNewlyCreatedDBObject(kcl, true);
+                        ed.WriteMessage("created kcl \n");
+                        tr.Commit();
+                    }
+
                     count++;
-                    continue;
                 }
-                // kcl text
+
                 using (Transaction tr = db.TransactionManager.StartTransaction()) {
                     BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
                     BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-                    DBText kcl = new DBText();
-                    kclX = kccdX - float.Parse(linesList[1]) / 2;
 
-                    kcl.TextString = linesList[1];
-                    kcl.Height = TSIZE;
-                    kcl.Rotation = 1.571;
-                    kcl.WidthFactor = 1;
-                    kcl.Position = new Point3d(kclX + 2, kclY - 4, 0);
-                    modelSpace.AppendEntity(kcl);
-                    tr.AddNewlyCreatedDBObject(kcl, true);
-                    ed.WriteMessage("created kcl \n");
+                    Line upperLine = new Line(new Point3d(100, kccdY + 7.5, 0), new Point3d(kccdX, kccdY + 7.5, 0));
+                    modelSpace.AppendEntity(upperLine);
+                    tr.AddNewlyCreatedDBObject(upperLine, true);
                     tr.Commit();
                 }
 
-                count++;
+                using (Transaction tr = db.TransactionManager.StartTransaction()) {
+                    BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+                    Line lowerLine = new Line(new Point3d(100, kccdY + 17.5, 0), new Point3d(kccdX, kccdY + 17.5, 0));
+                    modelSpace.AppendEntity(lowerLine);
+                    tr.AddNewlyCreatedDBObject(lowerLine, true);
+                    tr.Commit();
+                }
             }
-
-            using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                Line upperLine = new Line(new Point3d(100, kccdY + 7.5, 0), new Point3d(kccdX, kccdY + 7.5, 0));
-                modelSpace.AppendEntity(upperLine);
-                tr.AddNewlyCreatedDBObject(upperLine, true);
-                tr.Commit();
+            catch {
+                ed.WriteMessage("\nFailed to open file");
+                return;
             }
-
-            using (Transaction tr = db.TransactionManager.StartTransaction()) {
-                BlockTable blockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord modelSpace = tr.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
-
-                Line lowerLine = new Line(new Point3d(100, kccdY + 17.5, 0), new Point3d(kccdX, kccdY + 17.5, 0));
-                modelSpace.AppendEntity(lowerLine);
-                tr.AddNewlyCreatedDBObject(lowerLine, true);
-                tr.Commit();
-            }
-
         }
 
         [CommandMethod("NTMWritePolyline")]
         public void cmdWritePolyline() {
+            string saveFilePath = func.OpenFile();
 
+            try {
+                StreamReader reader = new StreamReader(saveFilePath);
+                using (Transaction trans = db.TransactionManager.StartTransaction()) {
+                    BlockTable blockTable = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                    BlockTableRecord modelSpace = trans.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    Polyline pll = new Polyline();
 
+                    int count = 0;
+                    for (String line = reader.ReadLine(); line != null; line = reader.ReadLine()) {
+                        String[] XYZ = line.Split(',');
+                        pll.AddVertexAt(count, new Point2d(double.Parse(XYZ[0]), double.Parse(XYZ[1])), 0, 0, 0);
+                        count++;
+                    }
+                    modelSpace.AppendEntity(pll);
+                    trans.AddNewlyCreatedDBObject(pll, true);
 
+                    trans.Commit();
 
-
-
-
-
-
+                    ed.WriteMessage("\nPolyline created successfully.");
+                }
+            }
+            catch {
+                ed.WriteMessage("\nFailed to perform");
+                return;
+            }
         }
+
         #endregion
     }
 }

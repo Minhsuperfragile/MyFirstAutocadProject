@@ -1,16 +1,10 @@
-﻿using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
+﻿using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
-using AcAp = Autodesk.AutoCAD.ApplicationServices.Application;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
 using Autodesk.AutoCAD.Runtime;
+using System;
+using System.IO;
+using System.Windows.Forms;
 
 namespace MyFirstAutocadProject {
     internal class SupportFunction {
@@ -79,12 +73,13 @@ namespace MyFirstAutocadProject {
         }
 
         public double GetEnhancedPrecisionElevation(double[,] elements) {
-            if (elements[1,1] == 0) {
-                if (elements[0,1] == 0) {
+            if (elements[1, 1] == 0) {
+                if (elements[0, 1] == 0) {
                     throw new System.Exception("Failed to find distance to point");
                 }
                 return elements[0, 0];
-            } else if (elements[0,1] == 0){
+            }
+            else if (elements[0, 1] == 0) {
                 return elements[1, 0];
             }
 
@@ -92,17 +87,19 @@ namespace MyFirstAutocadProject {
             double elevationDiff = elements[0, 0] - elements[1, 0];
             double lower;
             //double upper;
-            //Commands.ed.WriteMessage("\nDistance 1st: " + elements[0, 0] + " " + elements[0, 1] + "\nDistance 2d: " + elements[1, 0] + " " + elements[1, 1]);
+            Commands.ed.WriteMessage("\nDistance 1st: " + elements[0, 0] + " " + elements[0, 1] + "\nDistance 2d: " + elements[1, 0] + " " + elements[1, 1]);
 
             if (elevationDiff < 0) {
                 lower = elements[0, 0];
                 //upper = elements[1, 0];
                 distanceRatio = elements[0, 1] / (elements[1, 1] + elements[0, 1]);
-            } else if (elevationDiff > 0) {
+            }
+            else if (elevationDiff > 0) {
                 lower = elements[1, 0];
                 //upper = elements[0, 0];
                 distanceRatio = elements[1, 1] / (elements[1, 1] + elements[0, 1]);
-            } else {
+            }
+            else {
                 return elements[0, 0];
             }
             double result = lower + Math.Abs(elevationDiff) * distanceRatio;
@@ -135,7 +132,7 @@ namespace MyFirstAutocadProject {
                         result[0, 0] = polyline.Elevation;
                         result[0, 1] = minDistance;
                     }
-                    else if (distance < result[1,1] && distance > minDistance) {
+                    else if (distance < result[1, 1] && distance > minDistance) {
                         result[1, 0] = polyline.Elevation;
                         result[1, 1] = distance;
                     }
@@ -180,7 +177,7 @@ namespace MyFirstAutocadProject {
         }
 
         public double GetClosestPointOnSegment(Point2d target, Point2d startPoint, Point2d endPoint) {
-            if (!IsNearToPoint(target, startPoint, endPoint,10)) {
+            if (!IsNearToPoint(target, startPoint, endPoint, 10)) {
                 return -1;
             }
 
@@ -197,8 +194,8 @@ namespace MyFirstAutocadProject {
             double AB = A.GetDistanceTo(B);
             double BC = B.GetDistanceTo(C);
             double AC = A.GetDistanceTo(C);
-            if (AC*AC > AB*AB + BC*BC) { return true; } // angle B is obtuse
-            else if (AB*AB > AC*AC + BC*BC) { return true; } // angle C is obtuse
+            if (AC * AC > AB * AB + BC * BC) { return true; } // angle B is obtuse
+            else if (AB * AB > AC * AC + BC * BC) { return true; } // angle C is obtuse
             else { return false; }
         }
 
@@ -274,7 +271,7 @@ namespace MyFirstAutocadProject {
                     }
                     return lines;
                 }
-                
+
             }
             return null;
         }
@@ -310,5 +307,32 @@ namespace MyFirstAutocadProject {
         }
         #endregion
 
+        #region General Utils
+        public String OpenFile() {
+            OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*";
+            fileDialog.InitialDirectory = @"C:\";
+            fileDialog.RestoreDirectory = true;
+
+            if (fileDialog.ShowDialog() == DialogResult.OK) {
+                String fileStream = fileDialog.FileName;
+                try {
+                    using (StreamReader reader = new StreamReader(fileStream)) {
+                        //fileContent = reader.ReadToEnd();
+                    }
+                    Commands.ed.WriteMessage("\nSelected :" + fileStream);
+                    return fileStream;
+                }
+                catch {
+                    Commands.ed.WriteMessage("Can't open");
+                    return string.Empty;
+                }
+            }
+            else {
+                Commands.ed.WriteMessage("\nFailed to get file");
+                return string.Empty;
+            }
+        }
+        #endregion
     }
 }
