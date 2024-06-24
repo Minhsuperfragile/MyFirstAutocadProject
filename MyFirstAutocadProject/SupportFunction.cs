@@ -39,8 +39,8 @@ namespace MyFirstAutocadProject {
         }
         #endregion
 
-        #region FindNearestPolyline support functions
-        public Polyline[] GetAllPolylineInLayer() {
+        #region Find elevation support functions
+        public Polyline[] GetAllPolylineInLayer() { // this function try to collect all pline that represent elevation
             Polyline[] resultSet = { };
             Transaction tran = Commands.db.TransactionManager.StartTransaction();
 
@@ -87,7 +87,7 @@ namespace MyFirstAutocadProject {
             double elevationDiff = elements[0, 0] - elements[1, 0];
             double lower;
             //double upper;
-            Commands.ed.WriteMessage("\nDistance 1st: " + elements[0, 0] + " " + elements[0, 1] + "\nDistance 2d: " + elements[1, 0] + " " + elements[1, 1]);
+            //Commands.ed.WriteMessage("\nDistance 1st: " + elements[0, 0] + " " + elements[0, 1] + "\nDistance 2d: " + elements[1, 0] + " " + elements[1, 1]);
 
             if (elevationDiff < 0) {
                 lower = elements[0, 0];
@@ -305,6 +305,10 @@ namespace MyFirstAutocadProject {
             }
             return length;
         }
+        #endregion
+
+        #region Read All Text
+
         #endregion
 
         #region General Utils

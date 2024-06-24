@@ -708,6 +708,35 @@ namespace MyFirstAutocadProject {
             }
         }
 
+        [CommandMethod("NTMReadAllText")]
+        public void cmdReadAllText() {
+            using (Transaction trans = db.TransactionManager.StartTransaction()) {
+                // Open the block table
+                BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                // Open the model space block table record
+                BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead) as BlockTableRecord;
+
+                // Iterate through the entities in the model space
+                foreach (ObjectId id in btr) {
+                    // Get the entity
+                    Entity ent = trans.GetObject(id, OpenMode.ForRead) as Entity;
+
+                    // Check if the entity is a text object
+                    if (ent is MText) {
+                        MText text = ent as MText;
+                        ed.WriteMessage($"\nText: {text.Contents}");
+                    }
+                    else if (ent is DBText) {
+                        DBText text = ent as DBText;
+                        ed.WriteMessage($"\nText: {text.TextString}");
+                    }
+                }
+
+                // Commit the transaction
+                trans.Commit();
+            }
+        }
         #endregion
     }
 }
