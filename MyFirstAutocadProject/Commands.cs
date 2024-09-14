@@ -507,6 +507,7 @@ namespace MyFirstAutocadProject {
 
         [CommandMethod("NTMWriteCoordinate")]
         public void cmdWriteCoordinate() {
+
             string saveFilePath = func.OpenFile();
 
             // read file:
@@ -517,7 +518,6 @@ namespace MyFirstAutocadProject {
                 int count = 1;
 
                 int TSIZE = 3;
-
 
                 double kccdX = 100;
                 double kccdY = 100;
@@ -710,6 +710,8 @@ namespace MyFirstAutocadProject {
 
         [CommandMethod("NTMReadAllText")]
         public void cmdReadAllText() {
+            string saveFilePath = func.OpenFile();
+
             using (Transaction trans = db.TransactionManager.StartTransaction()) {
                 // Open the block table
                 BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
@@ -721,21 +723,81 @@ namespace MyFirstAutocadProject {
                 foreach (ObjectId id in btr) {
                     // Get the entity
                     Entity ent = trans.GetObject(id, OpenMode.ForRead) as Entity;
+                    string textLine = "";
 
                     // Check if the entity is a text object
                     if (ent is MText) {
                         MText text = ent as MText;
-                        ed.WriteMessage($"\nText: {text.Contents}");
+                        ed.WriteMessage($"\nText: {text.Contents} {text.Location}");
+
+                        //if (!isFirst) {
+                        //    next = text.Location;
+                        //    dist = curr.DistanceTo(next);
+                        //    curr = next;
+                        //}
+                        //else {
+                        //    curr = text.Location;
+                        //    isFirst = false;
+                        //}
+
+                        textLine = $"{text.Contents},{text.Location}";
+
                     }
                     else if (ent is DBText) {
                         DBText text = ent as DBText;
-                        ed.WriteMessage($"\nText: {text.TextString}");
+                        ed.WriteMessage($"\nText: {text.TextString} {text.Position}");
+
+                        //if (!isFirst) {
+                        //    next = text.Position;
+                        //    dist = curr.DistanceTo(next);
+                        //    curr = next;
+                        //}
+                        //else {
+                        //    curr = text.Position;
+                        //    isFirst = false;
+                        //}
+
+                        textLine = $"{text.TextString},{text.Position}";
+                    }
+                    using (StreamWriter wr = File.AppendText(saveFilePath)) {
+                        wr.WriteLine(textLine);
+                        wr.Close();
                     }
                 }
 
                 // Commit the transaction
                 trans.Commit();
             }
+        }
+
+        [CommandMethod("NTMReadAlongLine")]
+        public void cmdReadAlongLine() {
+            string saveFilePath = func.OpenFile();
+
+            PromptEntityOptions peo = new PromptEntityOptions("Select a line: ");
+            peo.SetRejectMessage("Please select a line.");
+            peo.AllowNone = true;
+            peo.AddAllowedClass(typeof(Line), true);
+
+            PromptEntityResult per = ed.GetEntity(peo);
+
+            if (per.Status != PromptStatus.OK) {
+                if (per.Status == PromptStatus.None)
+                    ed.WriteMessage("No line selected. Aborting.");
+                return;
+            }
+
+            using (Transaction trans = db.TransactionManager.StartTransaction()) {
+
+                Line line = trans.GetObject(per.ObjectId, OpenMode.ForRead) as Line;
+                Vector3d direction = new Vector3d(line.EndPoint.X - line.StartPoint.X, line.EndPoint.Y - line.StartPoint.Y, line.EndPoint.Z - line.StartPoint.Z);
+
+
+
+            }
+
+
+
         }
         #endregion
     }
